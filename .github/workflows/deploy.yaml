@@ -39,7 +39,7 @@ jobs:
 
       - name: Check
         run: |
-          ./gradlew yarn_test
+          ./gradlew yarn_test-ci
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
