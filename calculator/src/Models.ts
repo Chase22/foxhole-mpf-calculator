@@ -1,19 +1,37 @@
+import {Cost} from "./Cost";
+
 export type PlayerFaction = "colonial" | "warden"
 export type Faction = "neutral" | PlayerFaction
-
 
 export const categories = [
     "heavy_ammunition",
     "heavy_arms",
-    "medical",
     "shipables",
     "small_arms",
     "supplies",
     "uniforms",
-    "utilities",
-    "vehicles" ] as const
+    "vehicles"
+] as const
 
 export type Category = typeof categories[number]
+
+export const CratePerQueue: Record<Category, number> = {
+    heavy_ammunition: 9,
+    heavy_arms: 9,
+    shipables: 5,
+    small_arms: 9,
+    supplies: 9,
+    uniforms: 9,
+    vehicles: 5
+}
+
+export const ResourcePerCrate: Record<keyof Cost, number> = {
+    bmat: 100,
+    emat: 40,
+    hemat: 30,
+    rmat: 20
+
+}
 
 export interface LogiItem {
     readonly displayId: number,
@@ -48,12 +66,7 @@ export interface Item {
     readonly numberProduced: number,
     readonly isMpfCraftable: boolean,
     readonly craftLocation: ReadonlyArray<string>,
-    readonly cost: {
-        readonly bmat: number
-        readonly rmat: number
-        readonly emat: number
-        readonly hemat: number
-    }
+    readonly cost: Cost
 }
 
 export function mapLogiItemToItem(logiItem: LogiItem): Item {

@@ -6,13 +6,20 @@
   "scripts": {
     "start": "parcel",
     "build": "parcel build",
-    "clean": "rm -r dist"
+    "clean": "rm -r dist",
+    "test": "jest --watch"
   },
   "dependencies": {
-    "@fontsource/jost": "^5.1.1"
+    "@fontsource/jost": "^5.1.1",
+    "rxjs": "^7.8.1"
   },
   "devDependencies": {
-    "parcel": "^2.13.3",
-    "@parcel/transformer-sass": "^2.13.3"
+    "@babel/core": "^7.26.0",
+    "@babel/preset-typescript": "^7.26.0",
+    "@parcel/babel-preset-env": "^2.13.3",
+    "@parcel/transformer-sass": "^2.13.3",
+    "babel-jest": "^29.7.0",
+    "jest": "^29.7.0",
+    "parcel": "^2.13.3"
   }
 }
