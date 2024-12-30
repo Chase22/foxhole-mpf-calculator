@@ -2,9 +2,10 @@ import '@fontsource/jost';
 import loadData from "./loadData";
 import {groupBy} from "./ArrayUtils";
 import {Category, Item} from './Models'
-import {also, appendChild, ifPresent} from "./HtmlUtils";
-import {combineLatest, concat, fromEvent, map, Observable, of} from "rxjs";
+import {appendChild, createElement, ifPresent} from "./HtmlUtils";
+import {combineLatest, concat, fromEvent, map, Observable, of, tap} from "rxjs";
 import {add, asCrates, calculateItemQueueCost, Cost, ZERO_COST} from "./Cost";
+import {getSavedSelectedItemName, setSavedSelectedItemName} from "./LocalStorage";
 
 const items = loadData().filter(value => value.faction.indexOf("colonial") > 0)
 
@@ -31,6 +32,8 @@ for (const costKey in ZERO_COST) {
 }
 
 for (const [category, items] of Object.entries(itemsByCategory)) {
+    const selectedItemName = getSavedSelectedItemName(category as Category)
+
     appendChild(mpfSelectionTable, "tr", tr => {
         appendChild(tr, "td", (td) => {
             td.innerText = capitalize(category)
@@ -38,13 +41,20 @@ for (const [category, items] of Object.entries(itemsByCategory)) {
 
         appendChild(tr, "td", (td) => {
             appendChild(td, "select", (select) => {
-                select.append(makeOption(""))
+                let option = makeOption("");
+                option.selected = selectedItemName === ""
+
+                select.append(option)
                 items.sort((a, b) => a.itemName > b.itemName ? 1 : -1).forEach(item => {
-                    select.append(makeOption(item.itemName))
+                    let option = makeOption(item.itemName);
+                    option.selected = selectedItemName === item.itemName
+
+                    select.append(option)
                 })
 
                 let costObservable = concat(of(ZERO_COST), fromEvent(select, "change")
                     .pipe(map(() => getItem(category, select.value)))
+                    .pipe(tap((item) => setSavedSelectedItemName(category as Category, item.itemName)))
                     .pipe(map((item) => calculateItemQueueCost(item))))
 
                 costObservable.subscribe(cost => {
@@ -116,7 +126,7 @@ function getItem(category: string, itemName: string): Item | undefined {
 }
 
 function makeOption(label: string) {
-    return also(document.createElement("option"), (option) => {
+    return createElement("option", (option) => {
         option.label = label
         option.value = label
     })
