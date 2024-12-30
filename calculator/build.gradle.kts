@@ -1,5 +1,9 @@
 import groovy.json.JsonSlurper
 
+plugins {
+    base
+}
+
 JsonSlurper().parse(file("package.json"))
     .uncheckedCast<Map<String,Any>>()
     .get("scripts")
@@ -9,10 +13,22 @@ JsonSlurper().parse(file("package.json"))
             group = "yarn"
             commandLine("sh")
             args("-c", "yarn $it")
-            setErrorOutput(System.err)
-            setStandardOutput(System.out)
+            logging.captureStandardOutput(LogLevel.INFO)
+            logging.captureStandardError(LogLevel.ERROR)
         }
     }
+
+tasks.build {
+    dependsOn("yarn_build")
+}
+
+tasks.check {
+    dependsOn("yarn_test-ci")
+}
+
+tasks.clean {
+    dependsOn("yarn_clean")
+}
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Any?.uncheckedCast() : T = this as T

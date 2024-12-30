@@ -7,7 +7,8 @@
     "start": "parcel",
     "build": "parcel build",
     "clean": "rm -r dist",
-    "test": "jest --watch"
+    "test": "jest --watch",
+    "test-ci": "jest"
   },
   "dependencies": {
     "@fontsource/jost": "^5.1.1",
