@@ -4,19 +4,38 @@ plugins {
     base
 }
 
+abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
+    @get:Input
+    abstract val script: Property<String>
+
+    init {
+        group = "yarn"
+    }
+
+    override fun exec() {
+        commandLine("sh")
+        args("-c", "yarn ${script.get()}")
+        logging.captureStandardOutput(LogLevel.INFO)
+        logging.captureStandardError(LogLevel.ERROR)
+        super.exec()
+    }
+
+}
+
 JsonSlurper().parse(file("package.json"))
-    .uncheckedCast<Map<String,Any>>()
+    .uncheckedCast<Map<String, Any>>()
     .get("scripts")
-    .uncheckedCast<Map<String,Any>>()
+    .uncheckedCast<Map<String, Any>>()
     .keys.forEach {
-        task<Exec>("yarn_$it") {
-            group = "yarn"
-            commandLine("sh")
-            args("-c", "yarn $it")
-            logging.captureStandardOutput(LogLevel.INFO)
-            logging.captureStandardError(LogLevel.ERROR)
+        task<YarnExec>("yarn_$it") {
+            dependsOn("yarn_setup")
+            script = it
         }
     }
+
+task<YarnExec>("yarn_setup") {
+    script = ""
+}
 
 tasks.build {
     dependsOn("yarn_build")
@@ -31,4 +50,4 @@ tasks.clean {
 }
 
 @Suppress("UNCHECKED_CAST")
-fun <T> Any?.uncheckedCast() : T = this as T
+fun <T> Any?.uncheckedCast(): T = this as T
