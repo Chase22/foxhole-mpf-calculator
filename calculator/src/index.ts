@@ -41,21 +41,22 @@ for (const [category, items] of Object.entries(itemsByCategory)) {
                 select.append(makeOption(""))
                 items.sort((a, b) => a.itemName > b.itemName ? 1 : -1).forEach(item => {
                     select.append(makeOption(item.itemName))
-
-                    let costObservable = concat(of(ZERO_COST), fromEvent(select, "change")
-                        .pipe(map(() => getItem(category, select.value)))
-                        .pipe(map((item) => calculateItemQueueCost(item))))
-
-                    costObservable.subscribe(cost => {
-                        for (const costKey in cost) {
-                            ifPresent(
-                                document.getElementById(`${category}-cost-${costKey}`),
-                                (elem) => elem.innerText = cost[costKey].toString()
-                            )
-                        }
-                    })
-                    costObservables[category] = costObservable
                 })
+
+                let costObservable = concat(of(ZERO_COST), fromEvent(select, "change")
+                    .pipe(map(() => getItem(category, select.value)))
+                    .pipe(map((item) => calculateItemQueueCost(item))))
+
+                costObservable.subscribe(cost => {
+                    for (const costKey in cost) {
+                        ifPresent(
+                            document.getElementById(`${category}-cost-${costKey}`),
+                            (elem) => elem.innerText = cost[costKey].toString()
+                        )
+                    }
+                })
+                costObservables[category] = costObservable
+
             })
         })
 
