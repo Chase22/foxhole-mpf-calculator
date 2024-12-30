@@ -16,9 +16,3 @@ export function appendChild<K extends keyof HTMLElementTagNameMap, T extends Nod
     }
     return element
 }
-
-export function ifPresent<T>(value: T, block: (value: T) => void) {
-    if (value != undefined) {
-        block(value)
-    }
-}

@@ -2,7 +2,7 @@ import '@fontsource/jost';
 import loadData from "./loadData";
 import {groupBy} from "./ArrayUtils";
 import {Category, Item} from './Models'
-import {appendChild, createElement, ifPresent} from "./HtmlUtils";
+import {appendChild, createElement} from "./HtmlUtils";
 import {combineLatest, concat, fromEvent, map, Observable, of, tap} from "rxjs";
 import {add, asCrates, calculateItemQueueCost, Cost, ZERO_COST} from "./Cost";
 import {getSavedSelectedItemName, setSavedSelectedItemName} from "./LocalStorage";
@@ -52,20 +52,12 @@ for (const [category, items] of Object.entries(itemsByCategory)) {
                     select.append(option)
                 })
 
-                let costObservable = concat(of(ZERO_COST), fromEvent(select, "change")
-                    .pipe(map(() => getItem(category, select.value)))
-                    .pipe(tap((item) => setSavedSelectedItemName(category as Category, item.itemName)))
-                    .pipe(map((item) => calculateItemQueueCost(item))))
-
-                costObservable.subscribe(cost => {
-                    for (const costKey in cost) {
-                        ifPresent(
-                            document.getElementById(`${category}-cost-${costKey}`),
-                            (elem) => elem.innerText = cost[costKey].toString()
-                        )
-                    }
-                })
-                costObservables[category] = costObservable
+                costObservables[category] = concat(
+                    of(calculateItemQueueCost(getItem(category, getSavedSelectedItemName(category as Category)))),
+                    fromEvent(select, "change")
+                        .pipe(tap(() => setSavedSelectedItemName(category as Category, select.value)))
+                        .pipe(map(() => getItem(category, select.value)))
+                        .pipe(map((item) => calculateItemQueueCost(item))))
 
             })
         })
@@ -74,25 +66,19 @@ for (const [category, items] of Object.entries(itemsByCategory)) {
             appendChild(tr, "td", (td) => {
                 td.id = `${category}-cost-${costKey}`
                 td.innerText = "0"
+
+                costObservables[category].subscribe(cost => {
+                    td.innerText = cost[costKey].toString()
+                })
             })
         }
     })
 }
 
-combineLatest(Object.values(costObservables) as Observable<Cost>[])
+const totalCostObservable = combineLatest(Object.values(costObservables) as Observable<Cost>[])
     .pipe(map(value => value.reduce((acc, curr) => add(acc, curr))))
-    .subscribe(totalCost => {
-        const costAsCrates = asCrates(totalCost)
-        for (const totalCostKey in totalCost) {
-            ifPresent(document.getElementById(`total-cost-${totalCostKey}`), (elem) => {
-                elem.innerText = totalCost[totalCostKey]
-            })
 
-            ifPresent(document.getElementById(`total-cost-crates-${totalCostKey}`), (elem) => {
-                elem.innerText = costAsCrates[totalCostKey]
-            })
-        }
-    })
+const totalCrateCostObservable = totalCostObservable.pipe(map(asCrates))
 
 appendChild(mpfSelectionTable, "tr", tr => {
     appendChild(tr, "td")
@@ -103,6 +89,11 @@ appendChild(mpfSelectionTable, "tr", tr => {
         appendChild(tr, "td", (td) => {
             td.id = `total-cost-${costKey}`
             td.innerText = "0"
+
+            totalCostObservable.subscribe(totalCost => {
+                td.innerText = totalCost[costKey]
+            })
+
         })
     }
 })
@@ -116,6 +107,10 @@ appendChild(mpfSelectionTable, "tr", tr => {
         appendChild(tr, "td", (td) => {
             td.id = `total-cost-crates-${costKey}`
             td.innerText = "0"
+
+            totalCrateCostObservable.subscribe(totalCost => {
+                td.innerText = totalCost[costKey]
+            })
         })
     }
 })
