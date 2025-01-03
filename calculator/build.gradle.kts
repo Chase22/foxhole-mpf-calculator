@@ -38,16 +38,23 @@ task<YarnExec>("yarn_setup") {
     script = ""
 }
 
-val generateHtmlTask = tasks.register<GenerateHtmlTask>("generateHtml") {
-    targetDirectory = layout.projectDirectory.dir("src/generated")
+val downloadJsonData = tasks.register<DownloadJsonDataTask>("downloadJsonData")
+
+val generateIndexFile = tasks.register<GenerateIndexFileTask>("generateIndexFile") {
+    dependsOn(downloadJsonData)
+
+    foxholeJsonDataFile.set(downloadJsonData.flatMap { it.outputFile })
+
+    outputFile = layout.projectDirectory.dir("src/generated").file("index.html")
+
 }
 
 tasks.named("yarn_build") {
-    dependsOn(generateHtmlTask)
+    dependsOn(generateIndexFile)
 }
 
 tasks.named("yarn_start") {
-    dependsOn(generateHtmlTask)
+    dependsOn(generateIndexFile)
 }
 
 tasks.build {

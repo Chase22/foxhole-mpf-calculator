@@ -1,7 +1,16 @@
 import kotlinx.html.*
+import org.gradle.api.file.RegularFileProperty
+import org.gradle.api.tasks.InputFile
 
-object IndexFile : HtmlFile {
-    override val name: String = "index"
+abstract class GenerateIndexFileTask : GenerateHtmlTask() {
+    @get:InputFile
+    abstract val foxholeJsonDataFile: RegularFileProperty
+
+    init {
+        outputFile.convention(
+            project.layout.buildDirectory.dir("html").map { it.file("index.html") }
+        )
+    }
 
     override fun TagConsumer<*>.generate() {
         html {
