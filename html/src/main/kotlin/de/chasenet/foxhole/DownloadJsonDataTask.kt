@@ -1,3 +1,5 @@
+package de.chasenet.foxhole
+
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.OutputFile

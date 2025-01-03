@@ -1,3 +1,5 @@
+package de.chasenet.foxhole
+
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 

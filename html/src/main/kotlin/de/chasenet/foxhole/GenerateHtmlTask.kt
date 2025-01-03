@@ -1,3 +1,5 @@
+package de.chasenet.foxhole
+
 import kotlinx.html.TagConsumer
 import kotlinx.html.stream.appendHTML
 import org.gradle.api.DefaultTask

@@ -1,3 +1,5 @@
+package de.chasenet.foxhole
+
 import kotlinx.html.*
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.tasks.InputFile
