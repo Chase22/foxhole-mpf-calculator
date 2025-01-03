@@ -2,10 +2,27 @@ import kotlinx.html.*
 import kotlinx.html.stream.appendHTML
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.OutputDirectory
 import org.gradle.api.tasks.TaskAction
+import org.gradle.kotlin.dsl.listProperty
+import kotlin.reflect.KClass
+import kotlin.reflect.full.primaryConstructor
+
+interface HtmlFile {
+    val name: String
+
+    fun TagConsumer<*>.generate()
+}
 
 abstract class GenerateHtmlTask : DefaultTask() {
+
+    private val fileGenerators: ListProperty<KClass<out HtmlFile>> =
+        project.objects.listProperty<KClass<out HtmlFile>>().convention(
+            listOf(IndexFile::class)
+        )
+
     @get:OutputDirectory
     val targetDirectory: DirectoryProperty = project.objects.directoryProperty().convention(
         project.layout.buildDirectory.dir("html")
@@ -13,68 +30,19 @@ abstract class GenerateHtmlTask : DefaultTask() {
 
     @TaskAction
     fun generateHtml() {
-        targetDirectory.asFile.get().let {
-            it.mkdir()
-            it.resolve("index.html").apply {
-                createNewFile()
-            }
-        }.outputStream()
-            .bufferedWriter().use {
-                it.appendHTML()
-                    .apply {
-                        html {
-                            lang = "en"
-                            head {
-                                meta(charset = "UTF-8")
-                                title("Foxhole MPF Calculator")
-                                script(type = "module", src = "../index.ts") {}
-                                link(rel = "stylesheet", href = "../main.scss")
-                            }
-                            body {
-                                main {
-                                    div {
-                                        classes = setOf("logo-container")
-                                        img(src = "../img/foxhole_logo_large.png") {
-                                            attributes["width"] = "70%"
-                                        }
-                                        h1 { text("MPF Queue Calculator") }
-                                    }
+        val targetDir = targetDirectory.asFile.get().apply {
+            mkdir()
+        }
 
-                                    section {
-                                        table {
-                                            id = "mpf-selection"
-                                            tr {
-                                                th { text("Queue") }
-                                                th { text("Item") }
-                                            }
-                                        }
-                                    }
-                                }
-                                footer {
-                                    ul {
-                                        li {
-                                            text("Data provided by ")
-                                            a(href = "https://foxholelogi.com") { text("foxholelogi.com") }
-                                        }
-                                        text(" - ")
-                                        li {
-                                            text("Licensed under ")
-                                            a(href = "https://github.com/Chase22/foxhole-mpf-calculator/blob/main/LICENSE") {
-                                                text(
-                                                    "GPLv3"
-                                                )
-                                            }
-                                        }
-                                        text(" - ")
-                                        li {
-                                            text("Created by Chase. Source available at ")
-                                            a(href = "https://github.com/Chase22/foxhole-mpf-calculator") { text("GitHub") }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
+        fileGenerators.get().map {
+            it.objectInstance ?: it.primaryConstructor!!.call()
+        }.forEach { file ->
+            targetDir.resolve("${file.name}.html").outputStream().bufferedWriter().use {
+                val consumer = it.appendHTML()
+                with(file) {
+                    consumer.generate()
+                }
             }
+        }
     }
 }
