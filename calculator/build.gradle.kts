@@ -2,6 +2,7 @@ import groovy.json.JsonSlurper
 
 plugins {
     base
+    id("html-builder")
 }
 
 abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
@@ -35,6 +36,18 @@ JsonSlurper().parse(file("package.json"))
 
 task<YarnExec>("yarn_setup") {
     script = ""
+}
+
+val generateHtmlTask = tasks.register<GenerateHtmlTask>("generateHtml") {
+    targetDirectory = layout.projectDirectory.dir("src/generated")
+}
+
+tasks.named("yarn_build") {
+    dependsOn(generateHtmlTask)
+}
+
+tasks.named("yarn_start") {
+    dependsOn(generateHtmlTask)
 }
 
 tasks.build {

@@ -1,7 +1,7 @@
 {
   "name": "foxhole-mpf-calculator",
   "version": "1.0.0",
-  "source": "src/index.html",
+  "source": "src/generated/index.html",
   "license": "MIT",
   "scripts": {
     "start": "parcel",
