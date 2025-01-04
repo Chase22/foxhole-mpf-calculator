@@ -17,6 +17,7 @@ abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
 
     override fun exec() {
         commandLine("sh")
+        workingDir(this.project.projectDir)
         args("-c", "yarn ${script.get()}")
         logging.captureStandardOutput(LogLevel.INFO)
         logging.captureStandardError(LogLevel.ERROR)
