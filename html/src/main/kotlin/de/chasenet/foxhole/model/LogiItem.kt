@@ -35,7 +35,6 @@ open class SafeSerializer<T>(
     }
 }
 
-
 @Serializable
 data class LogiItem(
     val displayId: Int,

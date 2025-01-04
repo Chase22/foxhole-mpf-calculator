@@ -1,4 +1,5 @@
 import {Cost} from "./Cost";
+import {Observable} from "rxjs";
 
 export type PlayerFaction =  "colonial" | "warden"
 export type Faction = "neutral" | PlayerFaction
@@ -27,6 +28,11 @@ export const ResourcePerCrate: Record<keyof Cost, number> = {
     hemat: 30,
     rmat: 20
 
+}
+
+export interface CategoryUiContext {
+    costObservable: Observable<Cost>
+    selectElement: HTMLSelectElement
 }
 
 export interface LogiItem {
