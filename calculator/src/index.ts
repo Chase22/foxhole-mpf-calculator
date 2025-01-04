@@ -2,131 +2,90 @@ import '@fontsource/jost';
 import loadData from "./loadData";
 import {groupBy} from "./ArrayUtils";
 import {Category, Item} from './Models'
-import {appendChild, createElement} from "./HtmlUtils";
+import {as} from "./HtmlUtils";
 import {combineLatest, concat, fromEvent, map, Observable, of, tap} from "rxjs";
-import {add, asCrates, calculateItemQueueCost, Cost, ZERO_COST} from "./Cost";
-import {getSavedSelectedItemName, setSavedSelectedItemName} from "./LocalStorage";
+import {add, asCrates, calculateItemQueueCost, Cost} from "./Cost";
+import {getPlayerFaction, getSavedSelectedItemName, setSavedSelectedItemName} from "./LocalStorage";
 
-const items = loadData().filter(value => value.faction.indexOf("colonial") > 0)
+const items = loadData()
 
 const itemsByCategory = groupBy(items, item => item.itemCategory)
 
-const costObservables: Record<Category, Observable<Cost> | undefined> = {
-    heavy_ammunition: undefined,
-    heavy_arms: undefined,
-    shipables: undefined,
-    small_arms: undefined,
-    supplies: undefined,
-    uniforms: undefined,
-    vehicles: undefined
-}
+const costObservables = new Map<Category, Observable<Cost>>()
 
-const mpfSelectionTable = document.getElementById("mpf-selection")
+Array.from(document.getElementsByClassName("queue-select"))
+    .map(select => select as HTMLSelectElement)
+    .map(select => {
+        const category: Category = select.getAttribute("data-category") as Category
 
-const headRow = mpfSelectionTable.getElementsByTagName("tr").item(0)
+        const selectedItemName = getSavedSelectedItemName(category)
 
-for (const costKey in ZERO_COST) {
-    appendChild(headRow, "th", (th) => {
-        th.innerText = costKey
-    })
-}
-
-for (const [category, items] of Object.entries(itemsByCategory)) {
-    const selectedItemName = getSavedSelectedItemName(category as Category)
-
-    appendChild(mpfSelectionTable, "tr", tr => {
-        appendChild(tr, "td", (td) => {
-            td.innerText = capitalize(category)
-        })
-
-        appendChild(tr, "td", (td) => {
-            appendChild(td, "select", (select) => {
-                let option = makeOption("");
-                option.selected = selectedItemName === ""
-
-                select.append(option)
-                items.sort((a, b) => a.itemName > b.itemName ? 1 : -1).forEach(item => {
-                    let option = makeOption(item.itemName);
-                    option.selected = selectedItemName === item.itemName
-
-                    select.append(option)
-                })
-
-                costObservables[category] = concat(
-                    of(calculateItemQueueCost(getItem(category, getSavedSelectedItemName(category as Category)))),
-                    fromEvent(select, "change")
-                        .pipe(tap(() => setSavedSelectedItemName(category as Category, select.value)))
-                        .pipe(map(() => getItem(category, select.value)))
-                        .pipe(map((item) => calculateItemQueueCost(item))))
-
+        Array.from(select.children)
+            .map(option => option as HTMLOptionElement)
+            .forEach(option => {
+                option.selected = option.value === selectedItemName
             })
-        })
 
-        for (const costKey in ZERO_COST) {
-            appendChild(tr, "td", (td) => {
-                td.id = `${category}-cost-${costKey}`
-                td.innerText = "0"
-
-                costObservables[category].subscribe(cost => {
-                    td.innerText = cost[costKey].toString()
-                })
-            })
-        }
+        costObservables[category] = concat(
+            of(calculateItemQueueCost(getItem(category, getSavedSelectedItemName(category as Category)))),
+            fromEvent(select, "change")
+                .pipe(tap(() => setSavedSelectedItemName(category as Category, select.value)))
+                .pipe(map(() => getItem(category, select.value)))
+                .pipe(map((item) => calculateItemQueueCost(item))))
     })
-}
+
+Array.from(document.getElementsByClassName("cost-cell"))
+    .map(td => td as HTMLTableCellElement)
+    .forEach(td => {
+        const category = td.getAttribute("data-category")
+        const resource = td.getAttribute("data-resource")
+
+        costObservables[category].subscribe(cost => {
+            td.innerText = cost[resource]
+        })
+    })
 
 const totalCostObservable = combineLatest(Object.values(costObservables) as Observable<Cost>[])
     .pipe(map(value => value.reduce((acc, curr) => add(acc, curr))))
 
 const totalCrateCostObservable = totalCostObservable.pipe(map(asCrates))
 
-appendChild(mpfSelectionTable, "tr", tr => {
-    appendChild(tr, "td")
-    appendChild(tr, "td", td => {
-        td.innerText = "Total"
-    })
-    for (const costKey in ZERO_COST) {
-        appendChild(tr, "td", (td) => {
-            td.id = `total-cost-${costKey}`
-            td.innerText = "0"
+Array.from(document.getElementsByClassName("total-cost-cell"))
+    .map(td => td as HTMLTableCellElement)
+    .forEach(td => {
+        const resource = td.getAttribute("data-resource")
 
-            totalCostObservable.subscribe(totalCost => {
-                td.innerText = totalCost[costKey]
-            })
-
+        totalCostObservable.subscribe(cost => {
+            td.innerText = cost[resource]
         })
-    }
-})
-
-appendChild(mpfSelectionTable, "tr", tr => {
-    appendChild(tr, "td")
-    appendChild(tr, "td", td => {
-        td.innerText = "Crates"
     })
-    for (const costKey in ZERO_COST) {
-        appendChild(tr, "td", (td) => {
-            td.id = `total-cost-crates-${costKey}`
-            td.innerText = "0"
 
-            totalCrateCostObservable.subscribe(totalCost => {
-                td.innerText = totalCost[costKey]
-            })
+Array.from(document.getElementsByClassName("total-crate-cell"))
+    .map(td => td as HTMLTableCellElement)
+    .forEach(td => {
+        const resource = td.getAttribute("data-resource")
+
+        totalCrateCostObservable.subscribe(cost => {
+            td.innerText = cost[resource]
         })
-    }
+    })
+
+const playerFaction = getPlayerFaction()
+
+Array.from(document.getElementsByClassName("item-option")).map(as<HTMLOptionElement>).forEach(option => {
+    const factions = option.dataset["faction"].split(",").map(faction => faction.trim())
+
+    option.hidden = !factions.includes(playerFaction)
 })
 
 function getItem(category: string, itemName: string): Item | undefined {
+    if (itemName === "") return undefined
+
     const items = itemsByCategory[category] as Item[]
-    return items.find(item => item.itemName === itemName)
-}
+    const item = items.find(item => item.itemName === itemName);
 
-function makeOption(label: string) {
-    return createElement("option", (option) => {
-        option.label = label
-        option.value = label
-    })
-}
-
-function capitalize(value: string): string {
-    return value.split("_").map((it) => it.charAt(0).toUpperCase() + it.substring(1)).join(" ")
+    if (item == undefined) {
+        console.warn(`No item named ${itemName} found in category ${category}`)
+    }
+    return item
 }

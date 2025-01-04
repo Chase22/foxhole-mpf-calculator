@@ -1,19 +1,19 @@
 import {Cost} from "./Cost";
 
-export type PlayerFaction = "colonial" | "warden"
-export type Faction = "neutral" | PlayerFaction
-
-export const categories = [
-    "heavy_ammunition",
-    "heavy_arms",
-    "shipables",
-    "small_arms",
-    "supplies",
-    "uniforms",
-    "vehicles"
+export const playerFactions = [
+    "colonial", "warden"
 ] as const
 
-export type Category = typeof categories[number]
+export type PlayerFaction = typeof playerFactions[number]
+export type Faction = "neutral" | PlayerFaction
+
+export type Category = "heavy_ammunition" |
+    "heavy_arms" |
+    "shipables" |
+    "small_arms" |
+    "supplies" |
+    "uniforms" |
+    "vehicles"
 
 export const CratePerQueue: Record<Category, number> = {
     heavy_ammunition: 9,

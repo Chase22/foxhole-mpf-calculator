@@ -9,7 +9,7 @@ export function setPlayerFaction(faction: PlayerFaction) {
 }
 
 export function getPlayerFaction(): PlayerFaction {
-    return localStorage.getItem(FACTION_KEY) as PlayerFaction | "colonial"
+    return localStorage.getItem(FACTION_KEY) as PlayerFaction ?? "colonial"
 }
 
 export function getSavedSelectedItemName(category: Category): string {

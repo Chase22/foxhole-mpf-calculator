@@ -1,3 +1,5 @@
+import de.chasenet.foxhole.DownloadJsonDataTask
+import de.chasenet.foxhole.GenerateIndexFileTask
 import groovy.json.JsonSlurper
 
 plugins {
