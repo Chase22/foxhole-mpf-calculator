@@ -8,13 +8,13 @@ import kotlinx.serialization.encoding.Encoder
 
 @Serializable
 enum class ItemCategory {
-    heavy_ammunition,
-    heavy_arms,
-    shipables,
     small_arms,
+    heavy_arms,
+    heavy_ammunition,
     supplies,
     uniforms,
-    vehicles
+    vehicles,
+    shipables
 }
 
 object ItemCategorySerializer : SafeSerializer<ItemCategory>(ItemCategory.serializer())
