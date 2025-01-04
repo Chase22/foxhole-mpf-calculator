@@ -52,6 +52,17 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                             attributes["width"] = "70%"
                         }
                         h1 { text("MPF Queue Calculator") }
+                        select {
+                            id = "faction-selection"
+                            option {
+                                value = "colonial"
+                                label = "colonial"
+                            }
+                            option {
+                                value = "warden"
+                                label = "warden"
+                            }
+                        }
                     }
 
                     section {

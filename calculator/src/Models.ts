@@ -1,10 +1,6 @@
 import {Cost} from "./Cost";
 
-export const playerFactions = [
-    "colonial", "warden"
-] as const
-
-export type PlayerFaction = typeof playerFactions[number]
+export type PlayerFaction =  "colonial" | "warden"
 export type Faction = "neutral" | PlayerFaction
 
 export type Category = "heavy_ammunition" |

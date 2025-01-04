@@ -1,11 +1,11 @@
 import '@fontsource/jost';
 import loadData from "./loadData";
 import {groupBy} from "./ArrayUtils";
-import {Category, Item} from './Models'
+import {Category, Item, PlayerFaction} from './Models'
 import {as} from "./HtmlUtils";
-import {combineLatest, concat, fromEvent, map, Observable, of, tap} from "rxjs";
+import {combineLatest, concat, fromEvent, map, Observable, of, startWith, tap} from "rxjs";
 import {add, asCrates, calculateItemQueueCost, Cost} from "./Cost";
-import {getPlayerFaction, getSavedSelectedItemName, setSavedSelectedItemName} from "./LocalStorage";
+import {getPlayerFaction, getSavedSelectedItemName, setPlayerFaction, setSavedSelectedItemName} from "./LocalStorage";
 
 const items = loadData()
 
@@ -68,15 +68,13 @@ Array.from(document.getElementsByClassName("total-crate-cell"))
         totalCrateCostObservable.subscribe(cost => {
             td.innerText = cost[resource]
         })
-    })
-
-const playerFaction = getPlayerFaction()
-
-Array.from(document.getElementsByClassName("item-option")).map(as<HTMLOptionElement>).forEach(option => {
-    const factions = option.dataset["faction"].split(",").map(faction => faction.trim())
-
-    option.hidden = !factions.includes(playerFaction)
 })
+
+fromEvent(document.getElementById("faction-selection"), "change")
+    .pipe(map(ev => (ev.target as HTMLSelectElement).value as PlayerFaction))
+    .pipe(startWith(getPlayerFaction()))
+    .pipe(tap(faction => setPlayerFaction(faction)))
+    .subscribe(faction => hideItemsBasedOnFaction(faction))
 
 function getItem(category: string, itemName: string): Item | undefined {
     if (itemName === "") return undefined
@@ -88,4 +86,12 @@ function getItem(category: string, itemName: string): Item | undefined {
         console.warn(`No item named ${itemName} found in category ${category}`)
     }
     return item
+}
+
+function hideItemsBasedOnFaction(playerFaction: PlayerFaction) {
+    Array.from(document.getElementsByClassName("item-option")).map(as<HTMLOptionElement>).forEach(option => {
+        const factions = option.dataset["faction"].split(",").map(faction => faction.trim())
+
+        option.hidden = !factions.includes(playerFaction)
+    })
 }
