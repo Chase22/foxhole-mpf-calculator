@@ -1,3 +1,4 @@
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 
@@ -30,10 +31,12 @@ kotlin {
                 }
 
                 webpackTask {
+                    sourceMaps = true
                     mainOutputFileName = "$it.js"
                 }
 
                 runTask {
+                    sourceMaps = true
                     mainOutputFileName = "$it.js"
                 }
             }
@@ -48,9 +51,21 @@ kotlin {
             }
         }
 
-        modules.forEach {
-            named("${it}Main") {
-                resources.srcDirs(htmlDir)
+        modules.forEach { module ->
+            named("${module}Main") {
+                resources.srcDirs(
+                    htmlDir,
+                    provider {
+                        downloadJsonData.outputFile
+                            .get()
+                            .asFile.parentFile
+                    },
+                )
+
+                dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.10.1")
+                }
             }
         }
     }
@@ -58,10 +73,14 @@ kotlin {
 tasks.withType<KotlinJsCompile>().configureEach {
     compilerOptions {
         target = "es2015"
+        this.moduleKind = JsModuleKind.MODULE_ES
     }
 }
 
-val downloadJsonData = task<DownloadJsonDataTask>("downloadJsonData")
+val downloadJsonData =
+    task<DownloadJsonDataTask>("downloadJsonData") {
+        outputFile = layout.buildDirectory.dir("json").map { it.file("foxhole.json") }
+    }
 
 val htmlGeneratorJar by tasks.existing
 val htmlGeneratorRuntimeClasspath by configurations.existing
@@ -91,5 +110,5 @@ kotlin.targets.withType<KotlinJsIrTarget>().configureEach {
 
 tasks.withType<ProcessResources> {
     if (name == "htmlGeneratorProcessResources") return@withType
-    dependsOn(buildHtml)
+    dependsOn(buildHtml, downloadJsonData)
 }
