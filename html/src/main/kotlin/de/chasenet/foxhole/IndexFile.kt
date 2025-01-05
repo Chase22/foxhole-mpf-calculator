@@ -142,6 +142,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
 
                             tr {
                                 td()
+                                td()
                                 td {
                                     text("Crates")
                                 }
