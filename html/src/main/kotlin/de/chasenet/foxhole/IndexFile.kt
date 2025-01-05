@@ -92,7 +92,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                             color = "white"
 
                                             attributes["class"] = "reset-button"
-                                            attributes["data-category"] = category.name
+                                            this.category = category.name
                                             attributes["title"] = "Clear Queue"
                                         }
                                     }
@@ -101,16 +101,14 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                     }
                                     td {
                                         select("queue-select") {
-                                            attributes["data-category"] = category.name
-                                            
-                                            option {
-                                                text("")
-                                            }
+                                            this.category = category.name
+
+                                            option {}
                                             itemsByCategory[category]!!.sortedBy { it.itemName }.forEach { item ->
                                                 option("item-option") {
                                                     label = item.itemName
                                                     value = item.itemName
-                                                    attributes["data-faction"] = item.faction.joinToString()
+                                                    this.faction = item.faction.joinToString()
                                                 }
                                             }
                                         }
@@ -118,8 +116,8 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
 
                                     resources.forEach { resource ->
                                         td {
-                                            attributes["data-resource"] = resource
-                                            attributes["data-category"] = category.name
+                                            this.resource = resource
+                                            this.category = category.name
                                             classes = setOf("cost-cell")
                                             text(0)
                                         }
@@ -135,7 +133,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                 }
                                 resources.forEach { resource ->
                                     td("total-cost-cell") {
-                                        attributes["data-resource"] = resource
+                                        this.resource = resource
                                         text(0)
                                     }
                                 }
@@ -149,7 +147,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                 }
                                 resources.forEach { resource ->
                                     td("total-crate-cell") {
-                                        attributes["data-resource"] = resource
+                                        this.resource = resource
                                         text(0)
                                     }
                                 }
