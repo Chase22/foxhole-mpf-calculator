@@ -1,10 +1,7 @@
-import de.chasenet.foxhole.DownloadJsonDataTask
-import de.chasenet.foxhole.GenerateIndexFileTask
 import groovy.json.JsonSlurper
 
 plugins {
     base
-    id("html-builder")
 }
 
 abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
@@ -23,14 +20,15 @@ abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
         logging.captureStandardError(LogLevel.ERROR)
         super.exec()
     }
-
 }
 
-JsonSlurper().parse(file("package.json"))
+JsonSlurper()
+    .parse(file("package.json"))
     .uncheckedCast<Map<String, Any>>()
     .get("scripts")
     .uncheckedCast<Map<String, Any>>()
-    .keys.forEach {
+    .keys
+    .forEach {
         task<YarnExec>("yarn_$it") {
             dependsOn("yarn_setup")
             script = it
@@ -43,14 +41,7 @@ task<YarnExec>("yarn_setup") {
 
 val downloadJsonData = tasks.register<DownloadJsonDataTask>("downloadJsonData")
 
-val generateIndexFile = tasks.register<GenerateIndexFileTask>("generateIndexFile") {
-    dependsOn(downloadJsonData)
-
-    foxholeJsonDataFile.set(downloadJsonData.flatMap { it.outputFile })
-
-    outputFile = layout.projectDirectory.dir("src/generated").file("index.html")
-
-}
+val generateIndexFile = task("generateIndexFile")
 
 tasks.named("yarn_build") {
     dependsOn(generateIndexFile)

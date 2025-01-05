@@ -1,14 +1,13 @@
-package de.chasenet.foxhole
+package de.chasenet.foxhole.html.utils
 
 import kotlinx.html.HTMLTag
 import kotlinx.html.HtmlTagMarker
 import kotlinx.html.TagConsumer
 import kotlinx.html.visit
 
-
 class BoxIcon(
     name: String,
-    consumer: TagConsumer<*>
+    consumer: TagConsumer<*>,
 ) : HTMLTag("box-icon", consumer, mapOf("name" to name), inlineTag = true, emptyTag = false) {
     var name: String? by AttributeDelegate()
     var color: String? by AttributeDelegate()
@@ -20,26 +19,41 @@ class BoxIcon(
 }
 
 @HtmlTagMarker
-fun HTMLTag.boxIcon(name: String, block: BoxIcon.() -> Unit = {}) {
+fun HTMLTag.boxIcon(
+    name: String,
+    block: BoxIcon.() -> Unit = {},
+) {
     BoxIcon(name, consumer).visit(block)
 }
 
 enum class Type {
-    regular, solid, logo
+    regular,
+    solid,
+    logo,
 }
 
 enum class Size {
-    xs, sm, md, lg, cssSize
+    xs,
+    sm,
+    md,
+    lg,
+    cssSize,
 }
 
-enum class Rotate(value: Int) {
-    rotate_90(90), rotate_180(180), rotate_270(270)
+enum class Rotate(
+    value: Int,
+) {
+    rotate_90(90),
+    rotate_180(180),
+    rotate_270(270),
 }
 
 enum class Flip {
-    horizontal, vertical
+    horizontal,
+    vertical,
 }
 
 enum class Border {
-    square, circle
+    square,
+    circle,
 }

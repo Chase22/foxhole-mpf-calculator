@@ -1,54 +1,44 @@
-package de.chasenet.foxhole
+@file:Suppress("ktlint:standard:no-wildcard-imports")
 
+package de.chasenet.foxhole.html
+
+import de.chasenet.foxhole.HtmlFile
+import de.chasenet.foxhole.html.utils.boxIcon
+import de.chasenet.foxhole.html.utils.category
+import de.chasenet.foxhole.html.utils.faction
+import de.chasenet.foxhole.html.utils.resource
 import de.chasenet.foxhole.model.ItemCategory
 import de.chasenet.foxhole.model.LogiItem
 import de.chasenet.foxhole.model.resources
+import de.chasenet.foxhole.utils.capitalized
 import kotlinx.html.*
-import kotlinx.serialization.ExperimentalSerializationApi
-import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.decodeFromStream
-import org.gradle.api.file.RegularFileProperty
-import org.gradle.api.tasks.InputFile
-import org.gradle.internal.extensions.stdlib.capitalized
 
-abstract class GenerateIndexFileTask : GenerateHtmlTask() {
-    @get:InputFile
-    abstract val foxholeJsonDataFile: RegularFileProperty
+object IndexFile : HtmlFile {
+    override val fileName: String = "index.html"
 
-    private val json = Json { ignoreUnknownKeys = true }
+    override fun TagConsumer<*>.generate(logiItems: List<LogiItem>) {
+        logiItems
+            .filter { it.isMpfCraftable }
+            .filter { it.itemCategory == null }
+            .takeIf { it.isNotEmpty() }
+            ?.joinToString { it.itemName }
+            ?.also { throw IllegalArgumentException("Items without item category found: $it") }
 
-    init {
-        outputFile.convention(
-            project.layout.buildDirectory.dir("html").map { it.file("index.html") }
-        )
-    }
-
-    @OptIn(ExperimentalSerializationApi::class)
-    override fun TagConsumer<*>.generate() {
-        val items = json.decodeFromStream<List<LogiItem>>(foxholeJsonDataFile.asFile.get().inputStream())
-
-        items.filter { it.isMpfCraftable }.also {
-            it.filter { it.itemCategory == null }
-                .takeIf { it.isNotEmpty() }
-                ?.joinToString { it.itemName }
-                ?.also { throw IllegalArgumentException("Items without item category found: $it") }
-        }
-
-        val itemsByCategory = items.filter { it.isMpfCraftable }.groupBy { it.itemCategory }
+        val itemsByCategory = logiItems.filter { it.isMpfCraftable }.groupBy { it.itemCategory }
 
         html {
             lang = "en"
             head {
                 meta(charset = "UTF-8")
                 title("Foxhole MPF Calculator")
-                script(type = "module", src = "../index.ts") {}
-                link(rel = "stylesheet", href = "../main.scss")
+                script(type = "module", src = "mpf-calculator.js") {}
+                link(rel = "stylesheet", href = "main.scss")
             }
             body {
                 main {
                     div {
                         classes = setOf("logo-container")
-                        img(src = "../img/foxhole_logo_large.png") {
+                        img(src = "foxhole_logo_large.png") {
                             attributes["width"] = "70%"
                         }
                         h1 { text("MPF Queue Calculator") }
@@ -85,7 +75,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                 th { text("Hemat") }
                             }
 
-                            ItemCategory.values().forEach { category ->
+                            ItemCategory.entries.forEach { category ->
                                 tr {
                                     td {
                                         boxIcon("reset") {
@@ -152,7 +142,6 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                                     }
                                 }
                             }
-
                         }
                     }
                 }
@@ -167,7 +156,7 @@ abstract class GenerateIndexFileTask : GenerateHtmlTask() {
                             text("Licensed under ")
                             a(href = "https://github.com/Chase22/foxhole-mpf-calculator/blob/main/LICENSE") {
                                 text(
-                                    "GPLv3"
+                                    "GPLv3",
                                 )
                             }
                         }
