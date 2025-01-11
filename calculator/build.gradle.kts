@@ -11,6 +11,7 @@ val modules = arrayOf("mpf-calculator")
 
 dependencies {
     commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    commonTestImplementation(kotlin("test"))
 }
 
 val htmlDir =
