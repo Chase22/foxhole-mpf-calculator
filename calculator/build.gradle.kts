@@ -1,67 +1,116 @@
-import groovy.json.JsonSlurper
+import org.jetbrains.kotlin.gradle.dsl.JsModuleKind
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsCompile
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 
 plugins {
-    base
+    kotlin("multiplatform") version "2.1.0"
+    kotlin("plugin.serialization") version "2.1.0"
 }
 
-abstract class YarnExec : AbstractExecTask<YarnExec>(YarnExec::class.java) {
-    @get:Input
-    abstract val script: Property<String>
+val modules = arrayOf("mpf-calculator")
 
-    init {
-        group = "yarn"
-    }
-
-    override fun exec() {
-        commandLine("sh")
-        workingDir(this.project.projectDir)
-        args("-c", "yarn ${script.get()}")
-        logging.captureStandardOutput(LogLevel.INFO)
-        logging.captureStandardError(LogLevel.ERROR)
-        super.exec()
-    }
+dependencies {
+    commonMainImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 }
 
-JsonSlurper()
-    .parse(file("package.json"))
-    .uncheckedCast<Map<String, Any>>()
-    .get("scripts")
-    .uncheckedCast<Map<String, Any>>()
-    .keys
-    .forEach {
-        task<YarnExec>("yarn_$it") {
-            dependsOn("yarn_setup")
-            script = it
+val htmlDir =
+    provider {
+        tasks.getByName<ProcessResources>("htmlGeneratorProcessResources").destinationDir
+    }
+
+kotlin {
+    modules.forEach {
+        js(it, IR) {
+            browser {
+                binaries.executable()
+
+                commonWebpackConfig {
+                    cssSupport {
+                        enabled = true
+                    }
+                }
+
+                webpackTask {
+                    sourceMaps = true
+                    mainOutputFileName = "$it.js"
+                }
+
+                runTask {
+                    sourceMaps = true
+                    mainOutputFileName = "$it.js"
+                }
+            }
         }
     }
 
-task<YarnExec>("yarn_setup") {
-    script = ""
+    jvm("htmlGenerator")
+    sourceSets {
+        this.getByName("htmlGeneratorMain") {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.11.0")
+            }
+        }
+
+        modules.forEach { module ->
+            named("${module}Main") {
+                resources.srcDirs(
+                    htmlDir,
+                    provider {
+                        downloadJsonData.outputFile
+                            .get()
+                            .asFile.parentFile
+                    },
+                )
+
+                dependencies {
+                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.10.1")
+                }
+            }
+        }
+    }
+}
+tasks.withType<KotlinJsCompile>().configureEach {
+    compilerOptions {
+        target = "es2015"
+        this.moduleKind = JsModuleKind.MODULE_ES
+    }
 }
 
-val downloadJsonData = tasks.register<DownloadJsonDataTask>("downloadJsonData")
+val downloadJsonData =
+    task<DownloadJsonDataTask>("downloadJsonData") {
+        outputFile = layout.buildDirectory.dir("json").map { it.file("foxhole.json") }
+    }
 
-val generateIndexFile = task("generateIndexFile")
+val htmlGeneratorJar by tasks.existing
+val htmlGeneratorRuntimeClasspath by configurations.existing
 
-tasks.named("yarn_build") {
-    dependsOn(generateIndexFile)
+val buildHtml =
+    task<JavaExec>("buildHtml") {
+        dependsOn(downloadJsonData)
+
+        outputs.dir(htmlDir)
+
+        group = "build"
+
+        classpath(htmlGeneratorJar, htmlGeneratorRuntimeClasspath)
+        mainClass = "de.chasenet.foxhole.MainKt"
+
+        args(
+            htmlDir.get().absolutePath,
+            downloadJsonData.outputFile
+                .get()
+                .asFile.absolutePath,
+        )
+    }
+
+kotlin.targets.withType<KotlinJsIrTarget>().configureEach {
+    runTask.configure {
+        dependsOn(buildHtml)
+    }
 }
 
-tasks.named("yarn_start") {
-    dependsOn(generateIndexFile)
+tasks.withType<ProcessResources> {
+    if (name == "htmlGeneratorProcessResources") return@withType
+    dependsOn(buildHtml, downloadJsonData)
 }
-
-tasks.build {
-    dependsOn("yarn_build")
-}
-
-tasks.check {
-    dependsOn("yarn_test-ci")
-}
-
-tasks.clean {
-    dependsOn("yarn_clean")
-}
-
-@Suppress("UNCHECKED_CAST")
-fun <T> Any?.uncheckedCast(): T = this as T
