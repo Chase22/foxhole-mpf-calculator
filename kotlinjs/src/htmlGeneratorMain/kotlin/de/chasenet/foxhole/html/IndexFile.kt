@@ -7,9 +7,10 @@ import de.chasenet.foxhole.html.utils.boxIcon
 import de.chasenet.foxhole.html.utils.category
 import de.chasenet.foxhole.html.utils.faction
 import de.chasenet.foxhole.html.utils.resource
+import de.chasenet.foxhole.model.Faction
 import de.chasenet.foxhole.model.ItemCategory
 import de.chasenet.foxhole.model.LogiItem
-import de.chasenet.foxhole.model.resources
+import de.chasenet.foxhole.model.Resource
 import de.chasenet.foxhole.utils.capitalized
 import kotlinx.html.*
 
@@ -32,6 +33,7 @@ object IndexFile : HtmlFile {
                 meta(charset = "UTF-8")
                 title("Foxhole MPF Calculator")
                 script(type = "module", src = "mpf-calculator.js") {}
+                script(src = "https://unpkg.com/boxicons@2.1.4/dist/boxicons.js") {}
                 link(rel = "stylesheet", href = "main.scss")
             }
             body {
@@ -45,12 +47,12 @@ object IndexFile : HtmlFile {
                         select {
                             id = "faction-selection"
                             option {
-                                value = "colonial"
-                                label = "colonial"
+                                value = Faction.colonial.name
+                                label = Faction.colonial.name
                             }
                             option {
-                                value = "warden"
-                                label = "warden"
+                                value = Faction.warden.name
+                                label = Faction.warden.name
                             }
                         }
                     }
@@ -104,9 +106,9 @@ object IndexFile : HtmlFile {
                                         }
                                     }
 
-                                    resources.forEach { resource ->
+                                    Resource.entries.forEach { resource ->
                                         td {
-                                            this.resource = resource
+                                            this.resource = resource.name
                                             this.category = category.name
                                             classes = setOf("cost-cell")
                                             text(0)
@@ -121,9 +123,9 @@ object IndexFile : HtmlFile {
                                 td {
                                     text("Total")
                                 }
-                                resources.forEach { resource ->
+                                Resource.entries.forEach { resource ->
                                     td("total-cost-cell") {
-                                        this.resource = resource
+                                        this.resource = resource.name
                                         text(0)
                                     }
                                 }
@@ -135,9 +137,9 @@ object IndexFile : HtmlFile {
                                 td {
                                     text("Crates")
                                 }
-                                resources.forEach { resource ->
+                                Resource.entries.forEach { resource ->
                                     td("total-crate-cell") {
-                                        this.resource = resource
+                                        this.resource = resource.name
                                         text(0)
                                     }
                                 }
