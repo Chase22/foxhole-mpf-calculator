@@ -89,6 +89,8 @@ val buildHtml =
     task<JavaExec>("buildHtml") {
         dependsOn(downloadJsonData)
 
+        outputs.dir(htmlDir)
+
         group = "build"
 
         classpath(htmlGeneratorJar, htmlGeneratorRuntimeClasspath)
