@@ -35,18 +35,18 @@ jobs:
 
       - name: Build
         run: |
-          ./gradlew yarn_build
+          ./gradlew build
 
       - name: Check
         run: |
-          ./gradlew yarn_test-ci
+          ./gradlew check
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'calculator/dist'
+          path: 'calculator/build/dist/mpf-calculator/productionExecutable'
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
