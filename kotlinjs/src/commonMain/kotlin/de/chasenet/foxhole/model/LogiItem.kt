@@ -16,7 +16,7 @@ fun deserializeLogiItems(json: String) = logiItemJson.decodeFromString<List<Logi
 @Serializable
 data class LogiItem(
     val displayId: Int,
-    val faction: List<String>,
+    val faction: List<Faction>,
     val imgName: String,
     val itemName: String,
     val itemDesc: String,
@@ -37,9 +37,6 @@ enum class Resource {
     emat,
     hemat,
 }
-
-@Deprecated("Use Resource instead", ReplaceWith("Resource"))
-val resources = Resource.entries.map { it.name }
 
 @Serializable
 data class Cost(

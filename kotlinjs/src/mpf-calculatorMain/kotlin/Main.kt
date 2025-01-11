@@ -1,5 +1,6 @@
 import de.chasenet.foxhole.model.Cost
 import de.chasenet.foxhole.model.CratesPerQueue
+import de.chasenet.foxhole.model.Faction
 import de.chasenet.foxhole.model.ItemCategory
 import de.chasenet.foxhole.model.LogiItem
 import de.chasenet.foxhole.model.deserializeLogiItems
@@ -156,6 +157,9 @@ fun main() {
 
         selectElement
             .addEventFlow("change") { it.target.unsafeCast<HTMLSelectElement>().value }
+            .map { Faction.valueOf(it) }
+            .onEach(::savePlayerFaction)
+            .onStart { emit(getPlayerFaction()) }
             .collectLatest { faction ->
                 hideItemsBasedOnFaction(faction)
             }
@@ -182,11 +186,11 @@ fun main() {
     }
 }
 
-private fun hideItemsBasedOnFaction(faction: String) {
+private fun hideItemsBasedOnFaction(faction: Faction) {
     document
         .getElementsByClassName("item-option")
         .asListOf<HTMLOptionElement>()
         .forEach { option ->
-            option.hidden = option.faction?.contains(faction) == false
+            option.hidden = option.faction?.contains(faction.name) == false
         }
 }
