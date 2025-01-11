@@ -29,17 +29,17 @@ fun main(args: Array<String>) {
 
     val logiItems = deserializeLogiItems(foxholeJsonDataFile.readText())
 
-    htmlFiles.forEach {
-        with(it) {
+    htmlFiles.forEach { htmlFile ->
+        with(htmlFile) {
             htmlOutputDir
                 .resolve(fileName)
                 .writer()
-                .appendHTML()
-                .generate(logiItems)
+                .use { writer ->
+                    writer.appendHTML().generate(logiItems)
+                    writer.flush()
+                }
         }
     }
-
-    println(args.joinToString())
 }
 
 interface HtmlFile {
