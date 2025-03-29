@@ -52,8 +52,14 @@ kotlin {
             }
         }
 
-        modules.forEach { module ->
-            named("${module}Main") {
+        commonMain {
+            dependencies {
+                implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+            }
+        }
+
+        modules.forEach {
+            named("${it}Main") {
                 resources.srcDirs(
                     htmlDir,
                     provider {
@@ -62,12 +68,11 @@ kotlin {
                             .asFile.parentFile
                     },
                 )
-
-                dependencies {
-                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
-                    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core-js:1.10.1")
-                }
             }
+        }
+
+        commonTest.dependencies {
+            implementation("io.kotest:kotest-assertions-core:5.9.1")
         }
     }
 }
