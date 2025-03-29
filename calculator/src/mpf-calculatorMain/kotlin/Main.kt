@@ -60,7 +60,7 @@ fun main() {
             emit(
                 window
                     .fetch(
-                        Request("/foxhole.json"),
+                        Request("/foxhole-mpf-calculator/foxhole.json"),
                     ).then {
                         it.text()
                     }.then {
