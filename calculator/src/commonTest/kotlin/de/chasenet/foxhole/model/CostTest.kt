@@ -21,7 +21,7 @@ class CostTest {
     }
 
     @Test
-    fun `6th crate in a queue only gets 50% discounted`() {
+    fun `6th crate in a queue only gets 50 percent discounted`() {
         assertEquals(
             costOfConstant(100).queueCost(5) + costOfConstant(50),
             costOfConstant(100).queueCost(6),
